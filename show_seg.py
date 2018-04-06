@@ -39,7 +39,7 @@ idx = opt.idx
 print("model %d/%d" %( idx, len(d)))
 
 point, seg = d[idx]
-print(point.size(), seg.size())
+print('pointsize, segsize', point.size(), seg.size())
 
 point_np = point.numpy()
 
@@ -50,18 +50,24 @@ cmap = np.array([cmap(i) for i in range(10)])[:,:3]
 gt = cmap[seg.numpy() - 1, :]
 
 classifier = PointNetDenseCls(k = 4)
+classifier.eval()
+
+
 classifier.load_state_dict(torch.load(opt.model))
 
 point = point.transpose(1,0).contiguous()
 
 point = Variable(point.view(1, point.size()[0], point.size()[1]))
 pred, _ = classifier(point)
+val, idx = pred.data.max(2)
 
-pred_choice = pred.data.max(2)[1][0,:,0]
-#print(pred_choice.size())
+pred_choice = idx
+
 pred_color = cmap[pred_choice.numpy(), :]
 
 #print(pred_color.shape)
 
 showpoints(point_np, gt, pred_color)
+
+
 
