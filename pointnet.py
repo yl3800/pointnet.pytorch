@@ -45,7 +45,6 @@ class STN3d(nn.Module):
         x = F.relu(self.bn3(self.conv3(x)))
         x = self.mp1(x)
         x = x.view(-1, 1024)
-
         x = F.relu(self.bn4(self.fc1(x)))
         x = F.relu(self.bn5(self.fc2(x)))
         x = self.fc3(x)
@@ -62,6 +61,7 @@ class PointNetfeat(nn.Module):
     def __init__(self, num_points = 2500, global_feat = True):
         super(PointNetfeat, self).__init__()
         self.stn = STN3d(num_points = num_points)
+        #self.stn.eval()
         self.conv1 = torch.nn.Conv1d(3, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 128, 1)
         self.conv3 = torch.nn.Conv1d(128, 1024, 1)
@@ -113,6 +113,7 @@ class PointNetDenseCls(nn.Module):
         self.num_points = num_points
         self.k = k
         self.feat = PointNetfeat(num_points, global_feat=False)
+        #self.feat.eval()
         self.conv1 = torch.nn.Conv1d(1088, 512, 1)
         self.conv2 = torch.nn.Conv1d(512, 256, 1)
         self.conv3 = torch.nn.Conv1d(256, 128, 1)
@@ -129,7 +130,8 @@ class PointNetDenseCls(nn.Module):
         x = F.relu(self.bn3(self.conv3(x)))
         x = self.conv4(x)
         x = x.transpose(2,1).contiguous()
-        x = F.log_softmax(x.view(-1,self.k))
+        x = x.view(-1, self.k)
+        x = F.log_softmax(x, dim=0)
         x = x.view(batchsize, self.num_points, self.k)
         return x, trans
 
@@ -155,3 +157,4 @@ if __name__ == '__main__':
     seg = PointNetDenseCls(k = 3)
     out, _ = seg(sim_data)
     print('seg', out.size())
+
